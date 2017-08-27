@@ -1,0 +1,15 @@
+.settings {
+}
+
+.settings .bookmarks {
+  width: 400px;
+}
+.bookmarks ul {
+    padding: 0;
+    list-style: none;
+}
+
+.bookmarks > ul > li {
+  cursor: pointer;
+  text-align: left;
+}

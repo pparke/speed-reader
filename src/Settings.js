@@ -4,9 +4,14 @@ import './Settings.css';
 const { createElement } = React;
 
 class Settings extends Component {
+	constructor(props) {
+		super(props);
+
+		this.renderBookmarks = this.renderBookmarks.bind(this);
+	}
 
 	renderBookmarks() {
-		return this.props.bookmarks.map((bm, i) => <li key={i}>{bm}</li>)
+		return this.props.bookmarks.map((bm, i) => <li key={i} onClick={() => this.props.loadBookmark(bm.word)}>{bm.word}. {bm.context}</li>)
 	}
 
 	render() {
@@ -23,9 +28,12 @@ class Settings extends Component {
 			<div className="settings">
 				<input type="file" id="files" name="files[]" onChange={this.props.handleFileSelect} />
 				{ numInput }
-				<ul onClick={(e) => console.log(e.target)}>
-					{ this.renderBookmarks.bind(this) }
-				</ul>
+				<div className="bookmarks">
+					<h3>Bookmarks</h3>
+					<ul onClick={(e) => console.log(e.target)}>
+						{ this.renderBookmarks() }
+					</ul>
+				</div>
 			</div>
 		);
 	}

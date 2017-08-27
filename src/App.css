@@ -1,21 +1,13 @@
 .App {
   text-align: center;
+  font-family: Georgia, Times, "Times New Roman", serif;
+  font-size: 1.5em;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
-}
-
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
-}
-
-.App-intro {
-  font-size: large;
+.App pre {
+  margin: 10px 30px;
+  text-align: left;
+  font-size: 2em;
 }
 
 .words {
@@ -28,12 +20,12 @@
 	font-size: 3em;
 	line-height: 3em;
 	font-weight: 500;
-	font-family: Georgia, Times, "Times New Roman", serif;
 	min-height: 170px;
 	flex: 1;
 	white-space: nowrap;
 	overflow: hidden;
 }
+
 .word.current {
 	color: #000;
 	flex: 2;

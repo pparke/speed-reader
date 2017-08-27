@@ -10,8 +10,14 @@ class App extends Component {
 	constructor(props) {
 		super(props);
 
+		const {
+			baseInterval = 150,
+			word = 0,
+			bookmarks = []
+		} = this.load();
+
 		this.state = {
-			baseInterval: 150,
+			baseInterval,
 			delay: 200,
 			reading: false,
 			buttonText: 'Begin',
@@ -21,18 +27,22 @@ class App extends Component {
 			info: '',
 			text: '',
 			words: [],
-			word: 0,
-			bookmarks: []
+			word,
+			bookmarks
 		};
 
 		this.lastUpdate = 0;
 
+		this.save = this.save.bind(this);
+		this.load = this.load.bind(this);
 		this.checkCompat = this.checkCompat.bind(this);
 		this.handleFileSelect = this.handleFileSelect.bind(this);
 		this.displayContents = this.displayContents.bind(this);
 		this.toggle = this.toggle.bind(this);
-		this.update = this.update.bind(this);
 		this.bookmark = this.bookmark.bind(this);
+		this.loadBookmark = this.loadBookmark.bind(this);
+		this.renderText = this.renderText.bind(this);
+		this.update = this.update.bind(this);
 	}
 
 	componentDidMount() {
@@ -40,6 +50,24 @@ class App extends Component {
 			this.reader = new FileReader();
 			this.reader.onload = this.displayContents;
 		}
+	}
+
+	save() {
+		const saveState = {
+			baseInterval: this.state.baseInterval,
+			word: this.state.word,
+			bookmarks: this.state.bookmarks
+		};
+
+		localStorage.setItem('speed-reader', JSON.stringify(saveState));
+	}
+
+	load() {
+		const saveState = JSON.parse(localStorage.getItem('speed-reader')) || {};
+		const bookmarks = saveState.bookmarks || [];
+		const word = saveState.word || 0;
+		const baseInterval = saveState.baseInterval || 150;
+		return { baseInterval, word, bookmarks };
 	}
 
 	checkCompat() {
@@ -69,6 +97,7 @@ class App extends Component {
 	}
 
 	toggle() {
+		this.save();
 		this.setState(prev => {
 			// begin reading
 			if (!prev.reading) {
@@ -83,13 +112,43 @@ class App extends Component {
 
 	bookmark(e) {
 		this.setState(prev => {
+			const { word } = prev;
+			const context = prev.words.slice(word - 4, word + 4).join(' ');
 			const bookmarks = prev.bookmarks.slice();
-			bookmarks.push(prev.word);
+			bookmarks.push({
+				word,
+				context
+			});
 			console.log('bookmark added', bookmarks)
+			this.save();
 			return {
 				bookmarks
 			}
 		});
+	}
+
+	loadBookmark(word) {
+		console.log('loading word at', word, typeof word)
+		this.setState(prev => {
+			return {
+				prevWord: prev.words[word - 1],
+				current: prev.words[word],
+				nextWord: prev.words[word + 1],
+				word
+			}
+		})
+	}
+
+	renderText() {
+		//const following = this.state.words.slice(this.state.word + 2).join(' ');
+		const regex = new RegExp(`^\\s*(\\S+\\s+){${this.state.word + 2}}`);
+		console.log(regex);
+		const following = this.state.text.replace(regex, '');
+		return (
+			<pre>
+				{ following }
+			</pre>
+		);
 	}
 
 	update(timestamp) {
@@ -101,16 +160,17 @@ class App extends Component {
 		if (elapsed > this.state.delay) {
 			this.lastUpdate = timestamp;
 			this.setState(prev => {
-				const prevWord = prev.words[prev.word - 1] || '';
-				const current = prev.words[prev.word + 1];
-				const nextWord = prev.words[prev.word + 2];
-				const delay = prev.baseInterval + nextWord.length * 20;
+				const { word, words, baseInterval } = prev;
+				const prevWord = words[word - 1] || '';
+				const current = words[word + 1];
+				const nextWord = words[word + 2];
+				const delay = baseInterval + nextWord.length * 20;
 				return {
 					delay,
 					prevWord,
 					current,
 					nextWord,
-					word: prev.word + 1
+					word: word + 1
 				}
 			});
 		}
@@ -130,20 +190,19 @@ class App extends Component {
 								prevWord={this.state.prevWord}
 								current={this.state.current}
 								nextWord={this.state.nextWord}
-								/>
+							/>
+							{!this.state.reading ? this.renderText() : ''}
 						</div>
 					)} />
 					<Route exact path='/settings' render={() => (
 						<div>
 							<Link to={'/'}>Reader</Link>
 							<Settings bookmarks={this.state.bookmarks}
-												baseInterval={this.state.baseInterval}
-												setBaseInterval={(e) => this.setState({ baseInterval: +e.target.value })}
-												handleFileSelect={this.handleFileSelect}
+								baseInterval={this.state.baseInterval}
+								setBaseInterval={(e) => this.setState({ baseInterval: +e.target.value })}
+								handleFileSelect={this.handleFileSelect}
+								loadBookmark={this.loadBookmark}
 							/>
-							<pre>
-								{ this.state.text }
-							</pre>
 						</div>
 					)} />
 				</Switch>
